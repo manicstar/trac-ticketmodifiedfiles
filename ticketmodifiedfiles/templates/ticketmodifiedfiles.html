@@ -1,0 +1,107 @@
+<!DOCTYPE html
+    PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:py="http://genshi.edgewall.org/"
+      xmlns:xi="http://www.w3.org/2001/XInclude">
+  <xi:include href="layout.html" />
+  <head>
+    <title>
+      #${ticketid} related files (${ticketsdescription[ticketid]})
+    </title>
+  </head>
+
+  <body>
+    <py:def function="showfileslist(list, type)">
+      <py:choose>
+        <py:when test="len(list) > 0">
+          <h3>There <py:choose><py:when test="len(list) > 1">are</py:when><py:otherwise>is</py:otherwise></py:choose> ${len(list)} ${type} file<py:choose><py:when test="len(list) > 1">s</py:when></py:choose> related to this ticket:</h3>
+          
+          <ul>
+            <py:for each="filename in list">
+            <li class="fileslist">
+              <py:choose>
+                <py:when test="filestatus[filename] in ['edit', 'delete', 'add', 'copy', 'move']">
+                  <span class="${filestatus[filename]}">&nbsp;</span>
+                </py:when>
+                <py:otherwise>
+                  <span class="unknown">&nbsp;</span>
+                </py:otherwise>
+              </py:choose>
+              <span class="insidelist"><a href="${href.log(filename)}">${filename}</a>
+              <py:choose>
+                <py:when test="ticketisclosed == False and len(ticketsperfile[filename]) > 0">
+                  (ticket<py:choose><py:when test="len(ticketsperfile[filename]) > 1">s</py:when></py:choose> <py:for each="relticketid in ticketsperfile[filename]"><py:choose><py:when test="relticketid != ticketsperfile[filename][0] and relticketid != ticketsperfile[filename][-1]">, </py:when></py:choose><py:choose><py:when test="relticketid != ticketsperfile[filename][0] and relticketid == ticketsperfile[filename][-1]"> and </py:when></py:choose><a href="${href.ticket(relticketid)}" title="${ticketsdescription[relticketid]}">#${relticketid}</a></py:for>)
+                </py:when>
+              </py:choose>
+              </span>
+            </li>
+            </py:for>
+          </ul>
+          <div style='clear: both;'></div>
+        </py:when>
+      </py:choose>
+    </py:def>
+    
+    <div id="content" class="ticketmodifiedfiles">
+    
+      <h1>Modified files related to ticket #${ticketid}</h1>
+      <h3>#${ticketid}: ${ticketsdescription[ticketid]}</h3>
+      
+      <py:choose>
+        <py:when test="len(files) > 0 or len(deletedfiles) > 0">
+          <py:choose>
+            <py:when test="ticketisclosed == False">
+              <py:choose>
+                <py:when test="len(conflictingtickets) > 0">
+                  <h3><span style="text-decoration: underline;">WARNING:</span> ${len(conflictingtickets)} conflicting ticket<py:choose><py:when test="len(conflictingtickets) > 1">s</py:when></py:choose> <py:choose><py:when test="len(conflictingtickets) > 1">have</py:when><py:otherwise>has</py:otherwise></py:choose> been detected:</h3>
+                  <ul>
+                    <li py:for="relticketid, relticketstatus, relticketowner in conflictingtickets">
+                      <a href="${href.ticket(relticketid)}">#${relticketid}</a> (${ticketsdescription[relticketid]}, <span style="text-decoration: underline;">status:</span> ${relticketstatus}, <span style="text-decoration: underline;">owner:</span> ${relticketowner})
+                    </li>
+                  </ul>
+                </py:when>
+                <py:otherwise>
+                  <h3>No conflicting ticket has been detected.</h3>
+                </py:otherwise>
+              </py:choose>
+            </py:when>
+            <py:otherwise>
+              <h3>Conflicting tickets are not detected for closed tickets.</h3>
+            </py:otherwise>
+          </py:choose>
+          
+          <!-- List of modified files -->
+          ${showfileslist(files, "modified")}
+          
+          <!-- List of deleted files -->
+          ${showfileslist(deletedfiles, "deleted")}
+          
+          <div id="changesetslist">
+            <h3 class="backtonormalflow"><a id="changesetslink" href="#" onclick="togglevisibility('listofchangesets'); return false;">Display the list of changesets relative to this ticket.</a></h3>
+            <dl id="listofchangesets">
+            <py:for each="rev, author, date in revisions">
+			  <dt class="changeset">
+			    <a href="${href.changeset(rev)}">
+				  Changeset <em>[${rev}]</em> by
+				  <span class="author">${author}</span>
+				  <span class="time">${date}</span>
+			    </a>
+			  </dt>
+            </py:for>
+            </dl>
+            <div style='clear: both;'></div>
+          </div>
+          
+        </py:when>
+        <py:otherwise>
+          <h3>No file has been modified relating to this ticket.</h3>
+          <p style="font-size: 80%;"><span style="text-decoration: underline;">Hint:</span> You need to indicate the <span style="text-decoration: underline;">ticket number</span> in your commit message for this extension to work.<br/>For example, <span style="font-style: italic;">"TICKET #${ticketid}: &lt;Your commit message here&gt;"</span>.</p>
+        </py:otherwise>
+      </py:choose>
+      
+      <div>
+      </div>
+    </div>
+  </body>
+</html>
